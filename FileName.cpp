@@ -1,141 +1,125 @@
 #pragma once
 
-#include<iostream>
+#include <iostream>
 #include <vector>
 #include <climits>
 
 using namespace std;
 
-#define V 6
+#define V 6//城市数也是顶点数
+const int INF = INT_MAX;
 
-class Trip
+enum TripType{AIR,RAIL};
+
+class Trip 
 {
 public:
     int src;
     int dest;
-    int airTime;
-    int railTime;
-    int airCost;
-    int railCost;
-    Trip(int a,int b,int c,int d,int e,int f)
-    {
-        src = a;
-        dest = b;
-        airTime = c;
-        railTime = d;
-        airCost = e;
-        railCost = f;
-    }
-    Trip():Trip(0,0,0,0,0,0){}
+    int Time;
+    int Cost;  
+    TripType triptype;
 };
+
+//用Node包装Trip**，方便扩展
 class Node
 {
 public:
-    Trip* Sdata;
-    int data;
-    Node(Trip* T)
-    {
-        Sdata = T;
-        data = 0;
-    }
-    Node():Node(NULL){}
+    Trip** Sdata;
+    int data;      
+    //方式和交通控制在九种以内 
+    //遍历Trip*数组并在相应条件下找到权值
     void Tdata(int tripType, int method)
     {
         int sw = tripType * 10 + method;
-        switch (sw)
+        switch(sw)
         {
         case 0:
-            data = Sdata->airTime;
             break;
         case 1:
-            data = Sdata->railTime;
             break;
         case 10:
-            data = Sdata->airCost;
             break;
         case 11:
-            data = Sdata->railCost;
+            break;
+        default:
             break;
         }
     };
-    bool operator<(Node& n)
-    {
-        return (this->data <n.data);
-    }
     int operator+(int n)
     {
-        return(this->data + n);
+        return this->data + n;
     }
 };
 
 class Graph
 {
 public:
-    Graph() {}
-
-    int graph[V][V];
-    void Dijkstra(Node* graph[], int src);
-    vector<int> path(const vector<int>& dist);
+	Graph()
+    {
+        //读取数据建图
+    }
+    Node gragh[V][V];
+    void Dijkstra(Node** graph, int src,int dest);
+	vector<int> path(const vector<int>& dist);
 };
 
-int minDistance(const vector<int>& dist, const vector<bool>& visited)
+void Graph::Dijkstra(Node** g, int src, int dest)
 {
-    int minDist = INT_MAX;
-    int minIndex = -1;
-
-    for (int i = 0; i < V; i++)
+    int v = src;
+    int dist[V];
+    int path[V];
+    int S[V];
+    for(int i=0;i<V;i++)
     {
-        if (!visited[i] && dist[i] < minDist)
-        {
-            minDist = dist[i];
-            minIndex = i;
-        }
+        dist[i] = g[v][i].data;
+        S[i] = 0;
+        if (g[v][i].data != 0 && g[v][i].data < INF)
+            path[i] = v;
+        else
+            path[i] = -1;
     }
-
-    return minIndex;
-}
-
-vector<int> Graph::path(const vector<int>& dist)
-{
-    vector<int> ve;
-    for (int i = 0; i < V; i++)
+    S[v] = 1;
+    int mindus = -1;
+    int u = -1;
+    for(int i=0;i<V-1;i++)
     {
-        cout << i << " " << dist[i] << endl;
-    }
-    return ve;
-}
-
-void Graph::Dijkstra(Node* graph[], int src)
-{
-    vector<int> dist(V, INT_MAX);
-    vector<bool> visited(V, false);
-    dist[src] = 0;
-
-    for (int count = 0; count < V - 1; ++count)
-    {
-        int u = minDistance(dist, visited);
-        visited[u] = true;
-
-        for (int v = 0; v < V; ++v)
+        mindus = INF;
+        for(int j=0;j<V;j++)
         {
-            if (!visited[v]&& dist[u] != INT_MAX && (graph[u][v]+dist[u]< dist[v]))
+            if(S[j]==0&&dist[j]<mindus)
             {
-                dist[v] = graph[u][v] + dist[u];
+                u = j;
+                mindus = dist[j];
             }
         }
+        S[u] = 1;
+        for(int j=0;j<V;j++)
+        {
+            if(S[j]==0)
+                if (g[u][j].data < INF && g[u][j] + dist[u] < dist[j])
+                {
+                    dist[j] = g[u][j] + dist[u];
+                    path[j] = u;
+                }
+        }
     }
-
-    path(dist);
-}
-
-int main()
-{
-    Trip* t1=new Trip(0, 0, 30, 0, 0, 0);
-    Trip* t2 = new Trip(0, 0, 20, 0, 0, 0);
-    Node n1(t1);
-    n1.Tdata(0, 0);
-    Node n2(t2);
-    n2.Tdata(0, 0);
-    cout << (n1 < n2);
-    return 0;
+    int i = dest;
+    if (S[i] == 1 && i != v)
+    {
+        vector<int> apath;
+        cout << dist[i];
+        apath.push_back(i);
+        int pre = path[i];
+        while (pre != v)
+        {
+            apath.push_back(i);
+            pre = path[pre];
+        }
+        cout << v;
+        for (int k = apath.size() - 1; k >= 0; k--)
+            cout << apath[k];
+    }
+    else
+        cout << "NO";
 }
